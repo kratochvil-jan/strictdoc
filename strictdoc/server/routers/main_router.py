@@ -4597,6 +4597,19 @@ def create_main_router(
 
     @router.get("/{full_path:path}", response_class=Response)
     def get_incoming_request(request: Request, full_path: str) -> Response:
+        if (
+            project_config.html_reports_paths is not None
+            and full_path.startswith("html/reports/")
+        ):
+            reports_root = Path(
+                project_config.export_output_html_root, "html", "reports"
+            ).resolve()
+            requested_path = Path(
+                project_config.export_output_html_root, full_path
+            ).resolve()
+            if not requested_path.is_relative_to(reports_root):
+                return _error_response(HTTP_STATUS_NOT_FOUND, path_type="asset")
+            return get_asset(request, full_path)
         # FIXME: This seems to be quite un-sanitized.
         _, file_extension = os.path.splitext(full_path)
         if file_extension == ".html":

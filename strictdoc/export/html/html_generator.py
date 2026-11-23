@@ -4,6 +4,7 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import quote
 
 import orjson
 from html2pdf4doc import PATH_TO_HTML2PDF4DOC_JS
@@ -139,7 +140,8 @@ class HTMLGenerator:
                 output_doc_full_path = document_meta.output_document_full_path
 
                 if os.path.isfile(output_doc_full_path) and (
-                    get_file_modification_time(input_doc_full_path)
+                    self.project_config.html_reports_paths is None
+                    and get_file_modification_time(input_doc_full_path)
                     < get_file_modification_time(output_doc_full_path)
                     and not traceability_index.file_dependency_manager.must_generate(
                         document_meta.output_document_full_path
@@ -260,6 +262,39 @@ class HTMLGenerator:
                     project_config.get_custom_css_filename(),
                 ),
             )
+
+        if project_config.html_reports_paths is not None:
+            project_config.html_reports = []
+            output_reports_path = ( Path(export_output_html_root) / "html" / "reports").resolve()
+
+            root = project_config.get_project_root_path()
+            for path in project_config.html_reports_paths:
+                path = os.path.abspath( os.path.join(root, path))
+                if not os.path.isdir(path):
+                    raise ValueError(
+                        "config: html_reports_paths: "
+                        f"invalid path to a directory: {path}."
+                    )
+                resolved = Path(path).resolve()
+                if output_reports_path.is_relative_to(resolved) or resolved.is_relative_to(output_reports_path):
+                    raise ValueError( "config: html_reports_paths cannot overlap the report " " output directory.")
+
+                for report_ in sorted(resolved.iterdir()):
+                    if not report_.is_dir() or not (
+                        report_ / "index.html"
+                    ).is_file():
+                        continue
+                    shutil.copytree(
+                        report_,
+                        output_reports_path / report_.name,
+                        dirs_exist_ok=True,
+                    )
+                    project_config.html_reports.append(
+                        (
+                            report_.name,
+                            f"html/reports/{quote(report_.name, safe='')}/index.html",
+                        )
+                    )
 
         # Export HTML2PDF.
         if project_config.is_feature_activated(ProjectFeature.HTML2PDF):

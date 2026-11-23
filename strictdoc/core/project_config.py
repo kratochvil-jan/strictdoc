@@ -181,6 +181,7 @@ class ProjectConfig:
         # override StrictDoc's default stylesheets in the HTML export and
         # on the server.
         custom_css_path: Optional[str] = None,
+        html_reports_paths: Optional[list[str]] = None,
         user_plugin: Optional[StrictDocPlugin] = None,
         formats: Optional[List["Format"]] = None,
         # Reserved for StrictDoc's internal use.
@@ -443,6 +444,8 @@ class ProjectConfig:
         # Optional custom CSS path, project-relative. Validated and
         # resolved to an absolute path in validate_and_finalize().
         self.custom_css_path: Optional[str] = custom_css_path
+        self.html_reports_paths: Optional[list[str]] = html_reports_paths
+        self.html_reports: List[Tuple[str, str]] = []
 
         self.config_last_update: Optional[datetime.datetime] = (
             _config_last_update
@@ -761,6 +764,7 @@ class ProjectConfig:
                     f"invalid path to a CSS file: {custom_css_path}."
                 )
             self.custom_css_path = custom_css_path
+
 
         #
         # Validate path to Chrome Driver.
@@ -1208,6 +1212,7 @@ class ProjectConfigLoader:
         html2pdf_strict: bool = False
         html2pdf_template: Optional[str] = None
         custom_css_path: Optional[str] = None
+        html_reports_path: Optional[str] = None
         bundle_document_version = (
             ProjectConfigDefault.DEFAULT_BUNDLE_DOCUMENT_VERSION
         )
@@ -1274,6 +1279,9 @@ class ProjectConfigLoader:
 
             custom_css_path = project_content.get(
                 "custom_css_path", custom_css_path
+            )
+            html_reports_path = project_content.get(
+                "html_reports_path", html_reports_path
             )
 
             bundle_document_version = project_content.get(
@@ -1373,6 +1381,7 @@ class ProjectConfigLoader:
             html2pdf_strict=html2pdf_strict,
             html2pdf_template=html2pdf_template,
             custom_css_path=custom_css_path,
+            html_reports_path=html_reports_path,
             bundle_document_version=bundle_document_version,
             bundle_document_date=bundle_document_date,
             traceability_matrix_relation_columns=traceability_matrix_relation_columns,
