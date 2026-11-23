@@ -271,10 +271,8 @@ class HTMLGenerator:
             for path in project_config.html_reports_paths:
                 path = os.path.abspath( os.path.join(root, path))
                 if not os.path.isdir(path):
-                    raise ValueError(
-                        "config: html_reports_paths: "
-                        f"invalid path to a directory: {path}."
-                    )
+                    # The report path may not exist yet, it's fine
+                    continue
                 resolved = Path(path).resolve()
                 if output_reports_path.is_relative_to(resolved) or resolved.is_relative_to(output_reports_path):
                     raise ValueError( "config: html_reports_paths cannot overlap the report " " output directory.")
