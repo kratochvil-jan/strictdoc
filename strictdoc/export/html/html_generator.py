@@ -264,16 +264,20 @@ class HTMLGenerator:
             )
 
         if project_config.html_reports_paths is not None:
-            project_config.html_reports = []
+            project_config.html_reports = {}
             output_reports_path = ( Path(export_output_html_root) / "html" / "reports").resolve()
 
             root = project_config.get_project_root_path()
-            for path in project_config.html_reports_paths:
-                path = os.path.abspath( os.path.join(root, path))
-                if not os.path.isdir(path):
+            # There may be multiple reports folders configured
+            for reports_folder in project_config.html_reports_paths:
+                reports_folder = os.path.abspath( os.path.join(root, reports_folder))
+                reports_folder_basename = os.path.basename(reports_folder)
+
+                reports = []
+                if not os.path.isdir(reports_folder):
                     # The report path may not exist yet, it's fine
                     continue
-                resolved = Path(path).resolve()
+                resolved = Path(reports_folder).resolve()
                 if output_reports_path.is_relative_to(resolved) or resolved.is_relative_to(output_reports_path):
                     raise ValueError( "config: html_reports_paths cannot overlap the report " " output directory.")
 
@@ -284,15 +288,13 @@ class HTMLGenerator:
                         continue
                     shutil.copytree(
                         report_,
-                        output_reports_path / report_.name,
+                        output_reports_path / reports_folder_basename / report_.name,
                         dirs_exist_ok=True,
                     )
-                    project_config.html_reports.append(
-                        (
-                            report_.name,
-                            f"html/reports/{quote(report_.name, safe='')}/index.html",
-                        )
-                    )
+                    reports_entry = ( report_.name, f"html/reports/{reports_folder_basename}/{quote(report_.name, safe='')}/index.html")
+                    reports.append(reports_entry)
+
+                project_config.html_reports[reports_folder_basename] = reports
 
         # Export HTML2PDF.
         if project_config.is_feature_activated(ProjectFeature.HTML2PDF):

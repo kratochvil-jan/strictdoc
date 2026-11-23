@@ -445,7 +445,7 @@ class ProjectConfig:
         # resolved to an absolute path in validate_and_finalize().
         self.custom_css_path: Optional[str] = custom_css_path
         self.html_reports_paths: Optional[list[str]] = html_reports_paths
-        self.html_reports: List[Tuple[str, str]] = []
+        self.html_reports: dict[str, list[Tuple[str, str]]] = {}
 
         self.config_last_update: Optional[datetime.datetime] = (
             _config_last_update
